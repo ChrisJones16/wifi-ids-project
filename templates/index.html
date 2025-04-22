@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script>
+    setInterval(() => {
+      fetch("/")
+        .then(response => response.text())
+        .then(html => {
+          const temp = document.createElement('div');
+          temp.innerHTML = html;
+          const newAlerts = temp.querySelector("body").innerHTML;
+          document.body.innerHTML = newAlerts;
+        });
+    }, 5000);
+  </script>
+
+  <title>Wi-Fi IDS Dashboard</title>
+  <script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 20px;
+    }
+    h1, h2 {
+      color: #f66;
+    }
+    .alert {
+      padding: 5px;
+      border-bottom: 1px solid #444;
+    }
+    .timestamp {
+      color: #888;
+      margin-right: 10px;
+    }
+    canvas {
+      background: #222;
+      margin-top: 10px;
+    }
+    select {
+      background: #111;
+      color: #eee;
+      border: 1px solid #333;
+      padding: 5px;
+      border-radius: 4px;
+      margin-left: 5px;
+    }
+    .defense-btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="/scan" style="color: #fff; text-decoration: none;">
+    <button style="padding: 10px 20px; background: #f66; color: #fff; border: none; border-radius: 5px;">
+      📡 Scan for Nearby APs
+    </button>
+  </a>
+
+  <!-- 🆕 Live Defense Toggle -->
+  <h2>🛡️ Live Defense Mode</h2>
+  <form action="/toggle-defense" method="POST">
+    {% if defense_mode %}
+      <button type="submit" class="defense-btn" style="background: #4caf50; color: #fff;">
+        🟢 Defense Enabled (Click to Disable)
+      </button>
+    {% else %}
+      <button type="submit" class="defense-btn" style="background: #f44336; color: #fff;">
+        🔴 Defense Disabled (Click to Enable)
+      </button>
+    {% endif %}
+  </form>
+
+  <a href="/download-logs">
+    <button style="padding: 8px 16px; background: #4caf50; color: #fff; border: none; border-radius: 5px;">
+      📥 Download Logs (CSV)
+    </button>
+  </a>
+ 
+  <form action="/clear-logs" method="POST" style="display:inline;">
+    <button type="submit" style="padding: 8px 16px; background: #d32f2f; color: #fff; border: none; border-radius: 5px;">
+      🧹 Clear Logs
+    </button>
+  </form>
+
+
+  <h1>Wi-Fi IDS Alert Log</h1>
+  {% if alerts %}
+    {% for alert in alerts %}
+      <div class="alert">
+        <span class="timestamp">{{ alert.timestamp }}</span>
+        {{ alert.message }}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No alerts yet. System is quiet...</p>
+  {% endif %}
+
+  <h2>Deauth Activity Summary</h2>
+  {% if deauth_count > 0 or other_count > 0 %}
+    <canvas id="deauthChart" width="100" height="50"></canvas>
+    <script>
+      const pieCtx = document.getElementById('deauthChart').getContext('2d');
+      const pieChart = new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+          labels: ['Deauth Attacks', 'Other Alerts'],
+          datasets: [{
+            data: [{{ deauth_count }}, {{ other_count }}],
+            backgroundColor: ['#f44336', '#4caf50'],
+          }]
+        },
+        options: {
+          plugins: {
+            legend: {
+              labels: { color: '#fff' }
+            }
+          }
+        }
+      });
+    </script>
+  {% else %}
+    <p>No deauth activity detected yet.</p>
+  {% endif %}
+
+  <h2>Deauths Over Time (last {{ time_range }} min — grouped in 5-min buckets)</h2>
+
+  <form method="get" style="margin-bottom: 10px;">
+    <label for="range">🔍 View Range:</label>
+    <select name="range" id="range" onchange="this.form.submit()">
+      <option value="10" {% if time_range == 10 %}selected{% endif %}>Last 10 Minutes</option>
+      <option value="30" {% if time_range == 30 %}selected{% endif %}>Last 30 Minutes</option>
+      <option value="60" {% if time_range == 60 %}selected{% endif %}>Last 1 Hour</option>
+    </select>
+  </form>
+
+  <canvas id="deauthLineChart" width="250" height="120"></canvas>
+
+  <script>
+    const timeCtx = document.getElementById('deauthLineChart').getContext('2d');
+    const lineChart = new Chart(timeCtx, {
+      type: 'bar',
+      data: {
+        labels: {{ time_labels | tojson }},
+        datasets: [{
+          label: 'Deauths per Minute',
+          data: {{ time_counts | tojson }},
+          borderColor: '#f44336',
+          backgroundColor: 'rgba(244, 67, 54, 0.2)',
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        layout: { padding: 0 },
+        scales: {
+          x: {
+            ticks: { color: '#fff', font: { size: 10 }, autoskip: false, maxRotation: 45, minRotation: 20 }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { color: '#fff', font: { size: 10 } }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: { color: '#fff' }
+          }
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

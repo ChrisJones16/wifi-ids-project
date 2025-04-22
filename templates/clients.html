@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clients Connected to {{ bssid }}</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 20px;
+    }
+    h1 {
+      color: #f66;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid #444;
+    }
+    th {
+      background-color: #222;
+    }
+    form {
+      display: inline;
+    }
+    button {
+      background: #f44336;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #d32f2f;
+    }
+    .btn-blue {
+      background: #2196f3;
+    }
+    .btn-blue:hover {
+      background: #1976d2;
+    }
+    a {
+      color: #ccc;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Connected Clients - {{ bssid }} (Channel {{ channel }})</h1>
+
+  <!-- Action Buttons -->
+  <form method="POST" style="display:inline;">
+    <input type="hidden" name="action" value="rescan">
+    <button type="submit" class="btn-blue">🔄 Rescan This AP</button>
+  </form>
+
+  <form method="POST" action="/deauth" style="display:inline;">
+    <input type="hidden" name="target_mac" value="{{ bssid }}">
+    <input type="hidden" name="ap_bssid" value="{{ bssid }}">
+    <input type="hidden" name="channel" value="{{ channel }}">
+    <button type="submit">🚫 Deauth This AP</button>
+  </form>
+
+  <br><br>
+  <a href="/scan">⬅ Back to AP List</a>
+  <br>
+  <a href="/">Return to Home</a>
+
+  {% if clients %}
+    <table>
+      <tr>
+        <th>Client MAC</th>
+        <th>Vendor</th>
+        <th>Last Seen</th>
+        <th>Signal</th>
+        <th>Action</th>
+      </tr>
+      {% for client in clients %}
+        <tr>
+          <td>{{ client.mac }}</td>
+          <td>{{ client.vendor }}</td>
+          <td>{{ client.last_seen }}</td>
+          <td>{{ client.power }}</td>
+          <td>
+            <form method="POST" action="/deauth">
+              <input type="hidden" name="target_mac" value="{{ client.mac }}">
+              <input type="hidden" name="ap_bssid" value="{{ bssid }}">
+              <input type="hidden" name="channel" value="{{ channel }}">
+              <button type="submit">Deauth</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No clients detected under this AP.</p>
+  {% endif %}
+</body>
+</html>

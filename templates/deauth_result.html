@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Deauth Result</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 20px;
+    }
+    h1 {
+      color: #f66;
+    }
+    .success {
+      color: #4caf50;
+    }
+    .failure {
+      color: #f44336;
+    }
+    a {
+      color: #4fc3f7;
+      display: inline-block;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  {% if success %}
+    <h1 class="success">✅ Deauth sent to {{ target_mac }}</h1>
+  {% else %}
+    <h1 class="failure">❌ Failed to send deauth to {{ target_mac }}</h1>
+  {% endif %}
+
+  <a href="/clients/{{ ap_bssid }}/{{ channel }}">⬅ Back to AP</a><br>
+  <a href="/">🏠 Return to Home</a>
+</body>
+</html>
+

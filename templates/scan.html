@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Scan Nearby APs</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 20px;
+    }
+    h1 {
+      color: #f66;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid #444;
+    }
+    th {
+      background-color: #222;
+    }
+    .highlight {
+      background-color: #222;
+      border-left: 4px solid #00f7ff;
+    }
+    a {
+      color: #4fc3f7;
+      text-decoration: none;
+    }
+    .badge {
+      background: #00f7ff;
+      color: #111;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.8em;
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Nearby Wi-Fi Access Points</h1>
+  <a href="/" style="color: #ccc;">⬅ Back to Dashboard</a>
+
+  {% if aps %}
+    <table>
+      <tr>
+        <th>BSSID</th>
+        <th>Vendor</th>
+        <th>ESSID</th>
+        <th>Channel</th>
+        <th>Band</th>
+        <th>Signal</th>
+      </tr>
+
+      {% set valid_aps = aps | selectattr('power', 'ne', '-1') | list %}
+      {% set max_power = valid_aps | map(attribute='power') | map('int') | max %}
+
+      {% for ap in aps %}
+        {% if ap.power == '-1' %}
+          <tr style="opacity: 0.5;">
+        {% else %}
+          <tr class="{% if ap.power|int == max_power %}highlight{% endif %}">
+        {% endif %}
+            <td>
+              <a href="/clients/{{ ap.bssid }}/{{ ap.channel }}">{{ ap.bssid }}</a>
+            </td>
+            <td>{{ ap.vendor }}</td>
+            <td>{{ ap.essid }}</td>
+            <td>{{ ap.channel }}</td>
+            <td>{{ ap.band }}</td>
+            <td>
+              {{ ap.power }}
+              {% if ap.power|int == max_power %}
+                <span class="badge">Strongest</span>
+              {% endif %}
+            </td>
+          </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No access points found.</p>
+  {% endif %}
+</body>
+</html>
