@@ -1,4 +1,4 @@
-from flask import Flask, render_template,redirect, url_for,  request, flash, jsonify, send_file
+from flask import Flask, render_template,redirect, url_for, abort, request, flash, jsonify, send_file
 from datetime import timedelta
 from scripts import scan_network
 from scripts import scan_clients
@@ -173,7 +173,8 @@ def toggle_defense():
 @app.route("/download-logs")
 def download_logs():
     log_path = os.path.join(os.path.dirname(__file__), "logs/alerts.txt")
-    return send_file(log_path, as_attachment=True, download_name="alerts.csv")
+    return send_file(log_path, as_attachment=True, attachment_filename="alerts.csv")
+
 
 @app.route("/clear-logs", methods=["POST"])
 def clear_logs():
